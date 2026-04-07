@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
+import { EmbeddingService } from '../embeddings/embedding.service';
 import { CreateJobPostingDto } from './dto/create-job-posting.dto';
 import { UpdateJobPostingDto } from './dto/update-job-posting.dto';
 import { JobPosting } from './entities/job-posting.entity';
 
 @Injectable()
 export class JobPostingsService {
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(
+    private supabaseService: SupabaseService,
+    private embeddingService: EmbeddingService,
+  ) {}
 
   async create(
     employerId: string,
@@ -20,7 +24,13 @@ export class JobPostingsService {
       .single();
 
     if (error) throw new Error(error.message);
-    return data as JobPosting;
+
+    const job = data as JobPosting;
+    this.embeddingService
+      .generateJobEmbedding(job.id, dto.title, dto.description, dto.requirements)
+      .catch((err) => console.error('Job embedding failed:', err));
+
+    return job;
   }
 
   async findAll(
@@ -81,7 +91,13 @@ export class JobPostingsService {
 
     if (error || !data)
       throw new NotFoundException('Job posting not found or not owned by you');
-    return data as JobPosting;
+
+    const updated = data as JobPosting;
+    this.embeddingService
+      .generateJobEmbedding(updated.id, updated.title, updated.description, updated.requirements)
+      .catch((err) => console.error('Job re-embedding failed:', err));
+
+    return updated;
   }
 
   async remove(id: string, employerId: string): Promise<void> {
@@ -95,5 +111,7 @@ export class JobPostingsService {
     if (error) throw new Error(error.message);
     if (count === 0)
       throw new NotFoundException('Job posting not found or not owned by you');
+
+    await this.embeddingService.deleteJobEmbedding(id);
   }
 }

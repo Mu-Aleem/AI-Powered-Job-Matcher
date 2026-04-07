@@ -4,13 +4,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
+import { EmbeddingService } from '../embeddings/embedding.service';
 import { Resume } from './entities/resume.entity';
 import pdfParse from 'pdf-parse';
 import * as mammoth from 'mammoth';
 
 @Injectable()
 export class ResumesService {
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(
+    private supabaseService: SupabaseService,
+    private embeddingService: EmbeddingService,
+  ) {}
 
   async uploadAndParse(
     userId: string,
@@ -66,6 +70,12 @@ export class ResumesService {
       .single();
 
     if (error) throw new Error(error.message);
+
+    // Fire-and-forget: chunk + embed the resume
+    this.embeddingService
+      .generateResumeEmbeddings((data as Resume).id, parsedText)
+      .catch((err) => console.error('Resume embedding failed:', err));
+
     return data as Resume;
   }
 
@@ -84,6 +94,9 @@ export class ResumesService {
   async deleteResume(userId: string): Promise<void> {
     const resume = await this.getResume(userId);
     if (!resume) throw new NotFoundException('No resume found');
+
+    // Delete embeddings and chunks
+    await this.embeddingService.deleteResumeEmbeddings(resume.id);
 
     // Delete from storage
     await this.supabaseService

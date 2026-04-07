@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ResumesModule } from './resumes/resumes.module';
 import { JobPostingsModule } from './job-postings/job-postings.module';
+import { EmbeddingsModule } from './embeddings/embeddings.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { JobPostingsModule } from './job-postings/job-postings.module';
     UsersModule,
     ResumesModule,
     JobPostingsModule,
+    EmbeddingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

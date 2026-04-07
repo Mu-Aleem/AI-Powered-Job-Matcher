@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import * as bcrypt from 'bcryptjs';
+import OpenAI from 'openai';
 
 dotenv.config();
 
@@ -8,6 +9,11 @@ const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!,
 );
+
+const ollama = new OpenAI({
+  baseURL: process.env.OLLAMA_URL || 'http://localhost:11434/v1',
+  apiKey: 'ollama',
+});
 
 async function seed() {
   console.log('Seeding database...\n');
@@ -254,6 +260,49 @@ async function seed() {
 
   console.log(`\nSeeded ${inserted.length} job postings:`);
   inserted.forEach((j) => console.log(`  - ${j.title}`));
+
+  // 4. Generate embeddings for all job postings via Ollama
+  console.log('\nGenerating job embeddings via Ollama (nomic-embed-text)...');
+
+  const { data: allJobs } = await supabase
+    .from('job_postings')
+    .select('id, title, description, requirements');
+
+  if (allJobs) {
+    const model = process.env.EMBEDDING_MODEL || 'nomic-embed-text';
+
+    try {
+      const texts = allJobs.map(
+        (j) =>
+          `Title: ${j.title}\nDescription: ${j.description}\nRequirements: ${j.requirements.join(', ')}`,
+      );
+
+      const response = await ollama.embeddings.create({
+        model,
+        input: texts,
+      });
+
+      // Clear existing job embeddings
+      await supabase.from('job_embeddings').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+      const embeddingRows = allJobs.map((job, i) => ({
+        job_posting_id: job.id,
+        embedding: JSON.stringify(response.data[i].embedding),
+      }));
+
+      const { error: embError } = await supabase
+        .from('job_embeddings')
+        .insert(embeddingRows);
+
+      if (embError) {
+        console.error('Failed to insert embeddings:', embError.message);
+      } else {
+        console.log(`Generated embeddings for ${allJobs.length} jobs`);
+      }
+    } catch (err) {
+      console.error('Ollama embedding failed (is Ollama running?):', err);
+    }
+  }
 
   console.log('\n--- Demo Accounts ---');
   console.log('Employer:   employer@demo.com / password123');
