@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { ResumesModule } from './resumes/resumes.module';
 import { JobPostingsModule } from './job-postings/job-postings.module';
 import { EmbeddingsModule } from './embeddings/embeddings.module';
+import { MatchingModule } from './matching/matching.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { EmbeddingsModule } from './embeddings/embeddings.module';
     ResumesModule,
     JobPostingsModule,
     EmbeddingsModule,
+    MatchingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

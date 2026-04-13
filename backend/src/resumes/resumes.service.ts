@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
 import { EmbeddingService } from '../embeddings/embedding.service';
+import { ChunkingService } from '../embeddings/chunking.service';
 import { Resume } from './entities/resume.entity';
 import pdfParse from 'pdf-parse';
 import * as mammoth from 'mammoth';
@@ -14,6 +15,7 @@ export class ResumesService {
   constructor(
     private supabaseService: SupabaseService,
     private embeddingService: EmbeddingService,
+    private chunkingService: ChunkingService,
   ) {}
 
   async uploadAndParse(
@@ -29,6 +31,13 @@ export class ResumesService {
 
     // Parse text from file
     const parsedText = await this.extractText(file.buffer, fileType);
+
+    // Validate that the document looks like a resume
+    if (!this.chunkingService.isValidResume(parsedText)) {
+      throw new BadRequestException(
+        'This does not appear to be a resume. Please upload a document with clear sections like Skills, Experience, Education, etc.',
+      );
+    }
 
     // Upload to Supabase Storage
     const storagePath = `${userId}/${Date.now()}-${file.originalname}`;

@@ -31,6 +31,25 @@ const SECTION_PATTERNS: [RegExp, SectionType][] = [
 
 @Injectable()
 export class ChunkingService {
+  /**
+   * Validates that the parsed text looks like a resume.
+   * Checks for at least 2 distinct resume section headers.
+   */
+  isValidResume(parsedText: string): boolean {
+    const lines = parsedText.split('\n');
+    const detectedTypes = new Set<SectionType>();
+
+    for (const line of lines) {
+      const matchedType = this.matchSectionHeader(line);
+      if (matchedType !== null) {
+        detectedTypes.add(matchedType);
+      }
+    }
+
+    // A real resume should have at least 2 distinct sections
+    return detectedTypes.size >= 2;
+  }
+
   chunkResume(parsedText: string): Chunk[] {
     const lines = parsedText.split('\n');
     const chunks: Chunk[] = [];
