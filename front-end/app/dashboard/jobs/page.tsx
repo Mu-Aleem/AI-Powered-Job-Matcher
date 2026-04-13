@@ -98,6 +98,9 @@ export default function MyJobsPage() {
                 key={job.id}
                 {...job}
                 showActions
+                onFindCandidates={() =>
+                  router.push(`/dashboard/jobs/${job.id}/candidates`)
+                }
                 onEdit={() =>
                   router.push(`/dashboard/jobs/${job.id}/edit`)
                 }

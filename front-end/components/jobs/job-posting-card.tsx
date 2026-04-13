@@ -12,6 +12,7 @@ interface JobPostingCardProps {
   showActions?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
+  onFindCandidates?: () => void;
 }
 
 const experienceLabels: Record<string, string> = {
@@ -40,6 +41,7 @@ export function JobPostingCard({
   showActions = false,
   onEdit,
   onDelete,
+  onFindCandidates,
 }: JobPostingCardProps) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-sm transition-shadow">
@@ -50,6 +52,14 @@ export function JobPostingCard({
         </div>
         {showActions && (
           <div className="flex gap-2">
+            {onFindCandidates && (
+              <button
+                onClick={onFindCandidates}
+                className="text-sm text-green-600 hover:underline"
+              >
+                Find Candidates
+              </button>
+            )}
             <button
               onClick={onEdit}
               className="text-sm text-blue-600 hover:underline"

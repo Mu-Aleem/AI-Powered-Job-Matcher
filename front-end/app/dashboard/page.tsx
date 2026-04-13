@@ -28,6 +28,11 @@ export default function DashboardPage() {
       href: '/dashboard/resume',
     },
     {
+      title: 'Job Matches',
+      description: 'View jobs matched to your resume using AI.',
+      href: '/dashboard/matches',
+    },
+    {
       title: 'Browse Jobs',
       description: 'Explore all available job postings.',
       href: '/dashboard/browse',
